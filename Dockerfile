@@ -1,71 +1,23 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    libpq-dev \
-    zip \
-    unzip \
-    ca-certificates
+# PHP extensions Laravel needs
+RUN apt-get update && apt-get install -y libzip-dev unzip \
+    && docker-php-ext-install pdo_mysql bcmath zip \
+    && a2enmod rewrite
 
-# Install PHP extensions
-RUN docker-php-ext-install \
-    pdo_mysql \
-    pdo_pgsql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    zip
+# Apache serves Laravel's /public
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf \
+    && sed -ri "s!/var/www/!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
-
 COPY . .
 
-RUN composer install \
-    --ignore-platform-reqs \
-    --no-dev \
-    --optimize-autoloader \
-    --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction \
+    && chown -R www-data:www-data storage bootstrap/cache
 
-RUN cp .env.example .env
-
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
-
-RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
-
-RUN a2enmod rewrite headers
-
-# ✅ start.sh includes migrate AND seed
-RUN echo '#!/bin/bash\n\
-php artisan config:cache\n\
-php artisan route:cache\n\
-php artisan migrate --force\n\
-php artisan db:seed --force\n\
-apache2-foreground' > /start.sh
-
-RUN chmod +x /start.sh
-
-EXPOSE 80
-
-CMD ["/start.sh"]
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]
