@@ -13,6 +13,7 @@ use App\Models\Report;
 use App\Models\RiskScore;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Tip;
 
 class WebAdminController extends Controller
 {
@@ -373,5 +374,54 @@ class WebAdminController extends Controller
         $reports = Report::with('user')->latest()->paginate(20);
 
         return view('admin.reports', compact('reports'));
+    }
+
+    /* ---------------- Tips ---------------- */
+
+    public function tips()
+    {
+        $tips = Tip::orderByRaw("FIELD(level, 'high', 'medium', 'low')")
+            ->orderByRaw("FIELD(priority, 'critical', 'high', 'medium', 'low')")
+            ->paginate(15);
+
+        return view('admin.tips', compact('tips'));
+    }
+
+    public function storeTip(Request $request)
+    {
+        $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'required|string|max:500',
+            'level'       => 'required|in:high,medium,low',
+            'priority'    => 'required|in:critical,high,medium,low',
+        ]);
+
+        Tip::create($request->only('title', 'description', 'level', 'priority') + ['is_active' => true]);
+
+        return back()->with('status', 'Tip created.');
+    }
+
+    public function updateTip(Request $request, $id)
+    {
+        $tip = Tip::findOrFail($id);
+
+        $request->validate([
+            'title'       => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:500',
+            'level'       => 'sometimes|in:high,medium,low',
+            'priority'    => 'sometimes|in:critical,high,medium,low',
+            'is_active'   => 'sometimes|boolean',
+        ]);
+
+        $tip->update($request->only('title', 'description', 'level', 'priority', 'is_active'));
+
+        return back()->with('status', 'Tip updated.');
+    }
+
+    public function deleteTip($id)
+    {
+        Tip::findOrFail($id)->delete();
+
+        return back()->with('status', 'Tip deleted.');
     }
 }

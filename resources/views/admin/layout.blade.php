@@ -50,6 +50,7 @@
                     'admin.lessons'     => 'Lessons',
                     'admin.quizzes'     => 'Quizzes',
                     'admin.simulations' => 'Simulations',
+                    'admin.tips'        => 'Tips',
                     'admin.scan-logs'   => 'Scan logs',
                     'admin.reports'     => 'Reports',
                 ];

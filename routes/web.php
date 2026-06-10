@@ -96,6 +96,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::put('/users/{id}', [WebAdminController::class, 'updateUser'])->whereNumber('id')->name('users.update');
     Route::delete('/users/{id}', [WebAdminController::class, 'deleteUser'])->whereNumber('id')->name('users.delete');
 
+    // Tips
+    Route::get('/tips', [WebAdminController::class, 'tips'])->name('tips');
+    Route::post('/tips', [WebAdminController::class, 'storeTip'])->name('tips.store');
+    Route::put('/tips/{id}', [WebAdminController::class, 'updateTip'])->whereNumber('id')->name('tips.update');
+    Route::delete('/tips/{id}', [WebAdminController::class, 'deleteTip'])->whereNumber('id')->name('tips.delete');
+
     // Lessons
     Route::get('/lessons', [WebAdminController::class, 'lessons'])->name('lessons');
     Route::post('/lessons', [WebAdminController::class, 'storeLesson'])->name('lessons.store');
