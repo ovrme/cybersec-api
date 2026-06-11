@@ -30,20 +30,6 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [WebAuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-/* ---------------- Email verification ---------------- */
-Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', fn () => view('auth.verify-email'))->name('verification.notice');
-
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
-        return redirect()->route('dashboard')->with('status', 'Email verified — welcome aboard.');
-    })->middleware('signed')->name('verification.verify');
-
-    Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-        return back()->with('status', 'Verification link sent.');
-    })->middleware('throttle:6,1')->name('verification.send');
-});
 
 /* ---------------- Authenticated + verified ---------------- */
 Route::middleware(['auth'])->group(function () {
@@ -89,7 +75,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 /* ---------------- 12. Admin Panel ---------------- */
-Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [WebAdminController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/users', [WebAdminController::class, 'users'])->name('users');

@@ -48,15 +48,15 @@ class WebAuthController extends Controller
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
+            'name'              => $data['name'],
+            'email'             => $data['email'],
+            'password'          => Hash::make($data['password']),
+            'email_verified_at' => now(),   // verification disabled — mark verified on signup
         ]);
 
-        event(new Registered($user));
         Auth::login($user);
 
-        return redirect()->route('verification.notice');
+        return redirect()->route('dashboard');
     }
 
     public function logout(Request $request)
